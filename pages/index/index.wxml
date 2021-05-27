@@ -1,5 +1,13 @@
 <!--index.wxml-->
 <view class="container">
+<view><calendar id="calendar"
+    config="{{calendarConfig}}"
+    bind:onSwipe="onSwipe"
+    bind:whenChangeWeek="whenChangeWeek"
+    bind:whenChangeMonth="whenChangeMonth"
+    bind:takeoverTap="takeoverTap"
+    bind:afterTapDate="afterTapDate"
+    bind:afterCalendarRender="afterCalendarRender" /></view>
   <!-- <view class="userinfo">
     <block wx:if="{{canIUseOpenData}}" calss="userinfo-opendata">
       <view class="userinfo-avatar" bindtap="bindViewTap">
@@ -17,11 +25,6 @@
       <text class="userinfo-nickname">{{userInfo.nickName}}</text>
     </block>
   </view> -->
-  <view>
-    <van-calendar show-title="{{false}}" poppable="{{ false }}" min-date="{{ minDate }}" max-date="{{ maxDate }}"
-      show-confirm="{{ false }}" default-date="{{nowDate}}" class="calendar" style="--calendar-height: 350px;"
-      row-height="{{40}}" />
-  </view>
   <view style="width:100%; margin-top:40rpx;" wx:for="{{dayEvent}}" wx:for-item="i">
     <van-card>
       <view slot="desc">

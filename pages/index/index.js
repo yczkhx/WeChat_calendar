@@ -1,19 +1,32 @@
-// index.js
-// 获取应用实例
-const app = getApp()
+import plugin from '../../component/v2/plugins/index'
 
-Page({
+import todo from '../../component/v2/plugins/todo'
+import selectable from '../../component/v2/plugins/selectable'
+import solarLunar from '../../component/v2/plugins/solarLunar/index'
+import timeRange from '../../component/v2/plugins/time-range'
+import week from '../../component/v2/plugins/week'
+import holidays from '../../component/v2/plugins/holidays/index'
+
+
+plugin
+  .use(todo)
+  .use(solarLunar)
+  .use(selectable)
+  .use(week)
+  .use(timeRange)
+  .use(holidays)
+
+const conf = {
   data: {
-    motto: 'Hello World',
-    userInfo: {},
-    hasUserInfo: false,
-    canIUse: wx.canIUse('button.open-type.getUserInfo'),
-    canIUseGetUserProfile: false,
-    canIUseOpenData: wx.canIUse('open-data.type.userAvatarUrl') && wx.canIUse('open-data.type.userNickName'), // 如需尝试获取用户信息可改为false
-    date: '',
-    minDate: new Date(2021, 0, 1).getTime(),
-    maxDate: new Date(2021, 11, 31).getTime(),
-    nowDate: new Date().getTime(),
+    calendarConfig: {
+      theme: 'elegant',
+      markToday: '今',
+      // showHolidays: true,
+      // emphasisWeek: true,
+      // chooseAreaMode: true
+      defaultDate: '2020-9-8',
+      // autoChoosedWhenJump: true
+    },
     dayEvent:[
       {
         title:'aaaaa',
@@ -25,40 +38,241 @@ Page({
         startTime:'14:30',
         endTime:'15:30'
       }
-    ]
+    ],
   },
-  // 事件处理函数
-  bindViewTap() {
-    wx.navigateTo({
-      url: '../logs/logs'
+  afterTapDate(e) {
+    console.log('afterTapDate', e.detail)
+  },
+  whenChangeMonth(e) {
+    console.log('whenChangeMonth', e.detail)
+  },
+  whenChangeWeek(e) {
+    console.log('whenChangeWeek', e.detail)
+  },
+  takeoverTap(e) {
+    console.log('takeoverTap', e.detail)
+  },
+  afterCalendarRender(e) {
+    console.log('afterCalendarRender', e)
+    // 获取日历组件上的 calendar 对象
+    const calendar = this.selectComponent('#calendar').calendar
+    console.log('afterCalendarRender -> calendar', calendar)
+    calendar.jump({year:2018, month:6, date:6});
+  },
+  onSwipe(e) {
+    console.log('onSwipe', e)
+  },
+  showToast(msg) {
+    if (!msg || typeof msg !== 'string') return
+    wx.showToast({
+      title: msg,
+      icon: 'none',
+      duration: 1500
     })
   },
-  onLoad() {
-    if (wx.getUserProfile) {
-      this.setData({
-        canIUseGetUserProfile: true
-      })
+  generateRandomDate(type) {
+    let random = ~~(Math.random() * 10)
+    switch (type) {
+      case 'year':
+        random = 201 * 10 + ~~(Math.random() * 10)
+        break
+      case 'month':
+        random = (~~(Math.random() * 10) % 9) + 1
+        break
+      case 'date':
+        random = (~~(Math.random() * 100) % 27) + 1
+        break
+      default:
+        break
     }
+    return random
   },
-  getUserProfile(e) {
-    // 推荐使用wx.getUserProfile获取用户信息，开发者每次通过该接口获取用户个人信息均需用户确认，开发者妥善保管用户快速填写的头像昵称，避免重复弹窗
-    wx.getUserProfile({
-      desc: '展示用户信息', // 声明获取用户个人信息后的用途，后续会展示在弹窗中，请谨慎填写
-      success: (res) => {
-        console.log(res)
-        this.setData({
-          userInfo: res.userInfo,
-          hasUserInfo: true
-        })
-      }
-    })
-  },
-  getUserInfo(e) {
-    // 不推荐使用getUserInfo获取用户信息，预计自2021年4月13日起，getUserInfo将不再弹出弹窗，并直接返回匿名的用户个人信息
-    console.log(e)
+  handleAction(e) {
+    const { action, disable } = e.currentTarget.dataset
+    if (disable) {
+      this.showToast('抱歉，还不支持～😂')
+    }
     this.setData({
-      userInfo: e.detail.userInfo,
-      hasUserInfo: true
+      rst: []
     })
-  },
-})
+    const calendar = this.selectComponent('#calendar').calendar
+    const { year, month } = calendar.getCurrentYM()
+    switch (action) {
+      case 'config':
+        calendar
+          .setCalendarConfig({
+            showLunar: false,
+            theme: 'elegant',
+            multi: true
+          })
+          .then(conf => {
+            console.log('设置成功：', conf)
+          })
+        break
+      case 'getConfig':
+        const config = calendar.getCalendarConfig()
+        this.showToast('请在控制台查看结果')
+        console.log('自定义配置: ', config)
+        break
+      case 'jump': {
+        const year = this.generateRandomDate('year')
+        const month = this.generateRandomDate('month')
+        const date = this.generateRandomDate('date')
+        const config = calendar.getCalendarConfig()
+        if (config.weekMode) {
+          calendar['weekModeJump']({ year, month, date })
+        } else {
+          calendar[action]({ year, month, date })
+        }
+        break
+      }
+      case 'getSelectedDates': {
+        const selected = calendar[action]()
+        if (!selected || !selected.length)
+          return this.showToast('当前未选择任何日期')
+        this.showToast('请在控制台查看结果')
+        console.log('get selected dates: ', selected)
+        const rst = selected.map(item => JSON.stringify(item))
+        this.setData({
+          rst
+        })
+        break
+      }
+      case 'cancelSelectedDates':
+        const selected = calendar.getSelectedDates()
+        calendar[action](selected)
+        break
+      case 'setTodos': {
+        const dates = [
+          {
+            year,
+            month,
+            date: this.generateRandomDate('date'),
+            todoText: Math.random() * 10 > 5 ? '领奖日' : ''
+          }
+        ]
+        calendar[action]({
+          showLabelAlways: true,
+          dates
+        })
+        console.log('set todo: ', dates)
+        break
+      }
+      case 'deleteTodos': {
+        const todos = [...calendar.getTodos()]
+        if (todos.length) {
+          calendar[action]([todos[0]]).then(() => {
+            const _todos = [...calendar.getTodos()]
+            setTimeout(() => {
+              const rst = _todos.map(item => JSON.stringify(item))
+              this.setData(
+                {
+                  rst
+                },
+                () => {
+                  console.log('delete todo: ', todos[0])
+                }
+              )
+            })
+          })
+        } else {
+          this.showToast('没有待办事项')
+        }
+        break
+      }
+      case 'clearTodos':
+        const todos = [...calendar.getTodos()]
+        if (!todos || !todos.length) {
+          return this.showToast('没有待办事项')
+        }
+        calendar[action]()
+        break
+      case 'getTodos': {
+        const selected = calendar[action]()
+        if (!selected || !selected.length)
+          return this.showToast('未设置待办事项')
+        const rst = selected.map(item => JSON.stringify(item))
+        rst.map(item => JSON.stringify(item))
+        this.setData({
+          rst
+        })
+        break
+      }
+      case 'disableDates':
+        calendar[action]([
+          {
+            year,
+            month,
+            date: this.generateRandomDate('date')
+          }
+        ])
+        break
+      case 'enableArea': {
+        let sDate = this.generateRandomDate('date')
+        let eDate = this.generateRandomDate('date')
+        if (sDate > eDate) {
+          ;[eDate, sDate] = [sDate, eDate]
+        }
+        const area = [`${year}-${month}-${sDate}`, `${year}-${month}-${eDate}`]
+        calendar[action](area)
+        this.setData({
+          rstStr: JSON.stringify(area)
+        })
+        break
+      }
+      case 'enableDates':
+        const dates = [
+          `${year}-${month}-${this.generateRandomDate('date')}`,
+          `${year}-${month}-${this.generateRandomDate('date')}`,
+          `${year}-${month}-${this.generateRandomDate('date')}`,
+          `${year}-${month}-${this.generateRandomDate('date')}`,
+          `${year}-${month}-${this.generateRandomDate('date')}`
+        ]
+        calendar[action](dates)
+        this.setData({
+          rstStr: JSON.stringify(dates)
+        })
+        break
+      case 'switchView':
+        if (!this.week) {
+          calendar[action]('week').then(calendarData => {
+            console.log('switch success!', calendarData)
+          })
+          this.week = true
+        } else {
+          calendar[action]().then(calendarData => {
+            console.log('switch success!', calendarData)
+          })
+          this.week = false
+        }
+        break
+      case 'setSelectedDates':
+        const toSet = [
+          {
+            year,
+            month,
+            date: this.generateRandomDate('date')
+          },
+          {
+            year,
+            month,
+            date: this.generateRandomDate('date')
+          }
+        ]
+        calendar[action](toSet)
+        break
+      case 'getCalendarDates':
+        this.showToast('请在控制台查看结果')
+        console.log(
+          calendar.getCalendarDates({
+            lunar: true
+          })
+        )
+        break
+      default:
+        break
+    }
+  }
+}
+
+Page(conf)
