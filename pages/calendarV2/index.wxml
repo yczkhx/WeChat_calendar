@@ -1,46 +1,71 @@
 <view>
-  <van-notice-bar left-icon="volume-o" text="2021年5月31日将召开医院员工大会，请各位医生及时参与，不要缺席。" />
-</view>
-<view style="width: 90%;height:700rpx;overflow:hidden;margin: 0 auto 40rpx;margin-top:50rpx">
-  <calendar id="calendar" config="{{calendarConfig}}" bind:onSwipe="onSwipe" bind:whenChangeWeek="whenChangeWeek"
-    bind:whenChangeMonth="whenChangeMonth" bind:takeoverTap="takeoverTap" bind:afterTapDate="afterTapDate"
-    bind:afterCalendarRender="afterCalendarRender"></calendar>
-</view>
-
-<view style="width:100%; margin-top:40rpx;" wx:for="{{dayEvent}}" wx:for-item="i" >
-  <van-card style="border-radius: 50%;  ">
-    <view slot="desc">
-      <view style="font-size:15px">
-        <van-icon name="underway-o" style="margin-top:15px" />
-        <text>{{i.startTime}}</text>{{"--"}}<text>{{i.endTime}}</text></view>
-    </view>
-    <view slot="title">
-      <view style="font-size:20px">
-        <text>{{i.title}}</text></view>
-    </view>
-    <view slot="footer">
-      <van-button size="mini" bind:click="OpenChange" data-index='{{index}}'>修改</van-button>
-      <van-button size="mini" bind:click="deleteEvent" data-index='{{index}}'>删除</van-button>
-    </view>
-  </van-card>
-</view>
-<view style="margin: 0 auto;position: fixed; bottom: 55rpx;right:75rpx; width:80rpx">
-  <van-button plain icon="plus" round color="#808080" bind:click="newEvent" />
-</view>
-<view>
-  <van-dialog use-slot title="新建事件" show="{{ show }}" show-cancel-button 
-    bind:close="onClose" bind:confirm="sendNewEvent" >
-    <van-cell-group>
+  <view>
+    <van-notice-bar left-icon="volume-o" text="2021年5月31日将召开医院员工大会，请各位医生及时参与，不要缺席。" />
+  </view>
+  <view style="width: 100%;height:700rpx;overflow:hidden;margin: 0 auto 40rpx;margin-top:50rpx;margin-bottom:10rpx">
+    <calendar id="calendar" config="{{calendarConfig}}" bind:onSwipe="onSwipe" bind:whenChangeWeek="whenChangeWeek"
+      bind:whenChangeMonth="whenChangeMonth" bind:takeoverTap="takeoverTap" bind:afterTapDate="afterTapDate"
+      bind:afterCalendarRender="afterCalendarRender"></calendar>
+  </view>
+  <view style="width:90%; margin-bottom:50rpx;margin-left:5%;box-shadow: 5px 5px 5px #cdcfcf;" wx:for="{{dayEvent}}"
+    wx:for-item="i">
+    <van-card>
+      <view slot="desc">
+        <view style="font-size:15px">
+          <van-icon name="underway-o" style="margin-top:20px" />
+          <text>{{i.startTime}}</text>{{"--"}}<text>{{i.endTime}}</text></view>
+      </view>
+      <view slot="title">
+        <view style="font-size:20px">
+          <text>{{i.title}}</text></view>
+      </view>
+      <view slot="footer">
+        <van-button size="mini" bind:click="OpenChange" data-index='{{index}}'>修改</van-button>
+        <van-button size="mini" bind:click="deleteEvent" data-index='{{index}}'>删除</van-button>
+      </view>
+    </van-card>
+  </view>
+  <view style="margin: 0 auto;position: fixed; bottom: 55rpx;right:75rpx; width:80rpx">
+    <van-button plain icon="plus" round color="#808080" bind:click="newEvent" />
+  </view>
+  <view>
+    <van-dialog use-slot title="新建事件" show="{{ show }}" show-cancel-button bind:close="onClose"
+      bind:confirm="sendNewEvent">
+      <van-cell-group>
         <van-field label="标题" value="{{ newTitle }}" placeholder="请输入" border="{{ false }}" bind:change="onNewChange" />
       </van-cell-group>
       <van-cell-group>
-        <van-field label="开始时间" value="{{ time_start }}" placeholder="请输入" border="{{ false }}"  disabled  bind:click-input="clickStart" />
+        <van-field label="开始时间" value="{{ time_start }}" placeholder="请输入" border="{{ false }}" disabled
+          bind:click-input="clickStart" />
       </van-cell-group>
       <van-cell-group>
-        <van-field label="结束时间" value="{{ time_end }}" placeholder="请输入" border="{{ false }}" disabled  bind:click-input="clickEnd"  />
+        <van-field label="结束时间" value="{{ time_end }}" placeholder="请输入" border="{{ false }}" disabled
+          bind:click-input="clickEnd" />
       </van-cell-group>
-  </van-dialog>
-</view>
-<van-dialog use-slot title="新建事件" show="{{ showpop }}"  showConfirmButton="{{false}}" >
-    <van-datetime-picker type="time" value="{{ currentDate }}" bind:confirm="setTime" bind:cancel="onpopClose" />
     </van-dialog>
+  </view>
+  <van-dialog use-slot title="新建事件" show="{{ showpop }}" showConfirmButton="{{false}}">
+    <van-datetime-picker style="margin-top:30rpx" type="time" value="{{ currentDate }}" bind:confirm="setTime"
+      bind:cancel="onpopClose" />
+  </van-dialog>
+  <view>
+    <van-dialog use-slot title="修改事件" show="{{ showChange }}" show-cancel-button bind:close="onClose_cha"
+      bind:confirm="sendChangeEvent">
+      <van-cell-group>
+        <van-field label="标题" value="{{ newTitle_cha }}" placeholder="请输入" border="{{ false }}" bind:change="onNewChange_cha" />
+      </van-cell-group>
+      <van-cell-group>
+        <van-field label="开始时间" value="{{ time_start_cha }}" placeholder="请输入" border="{{ false }}" disabled
+          bind:click-input="clickStart_cha" />
+      </van-cell-group>
+      <van-cell-group>
+        <van-field label="结束时间" value="{{ time_end_cha }}" placeholder="请输入" border="{{ false }}" disabled
+          bind:click-input="clickEnd_cha" />
+      </van-cell-group>
+    </van-dialog>
+    <van-dialog use-slot title="修改事件" show="{{ showChangepop }}" showConfirmButton="{{false}}">
+    <van-datetime-picker style="margin-top:30rpx" type="time" value="{{ currentDate_cha }}" bind:confirm="ChangeTime"
+      bind:cancel="onChangepopClose" />
+  </van-dialog>
+  </view>
+</view>

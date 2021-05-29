@@ -5,7 +5,6 @@ import timeRange from '../../component/v2/plugins/time-range'
 import week from '../../component/v2/plugins/week'
 import holidays from '../../component/v2/plugins/holidays/index'
 import plugin from '../../component/v2/plugins/index'
-import Notify from '@vant/weapp/notify/index'
 plugin
   .use(todo)
   .use(solarLunar)
@@ -42,9 +41,17 @@ const conf = {
     showpop: false,
     nowTimeType: '',
     currentDate: '',
+    currentDate_cha: '',
     time_start: '',
     time_end: '',
     newTitle: '',
+    showChangepop: false,
+    showChange: false,
+    newTitle_cha: '',
+    time_start_cha: '',
+    time_end_cha: '',
+    nowTimeType_cha: '',
+    changeIndex:0,
   },
   onLoad() {
     console.log('onload')
@@ -69,6 +76,8 @@ const conf = {
   con() {
     var that = this
     console.log(that)
+    that.data.allEvent = []
+    that.data.calendarEvent = []
     wx.request({
       url: 'https://www.rhysdid.site:8082/doctor/as', //这里填写你的接口路径
       header: {
@@ -178,24 +187,47 @@ const conf = {
       show: true
     })
   },
+  // 新建事件dialog关闭
   onClose() {
     this.setData({
       show: false
     });
   },
+  // 修改事件dialog关闭
+  onClose_cha() {
+    this.setData({
+      showChange: false
+    });
+  },
+  // 新建事件点击时间输入框唤醒时间选择器
   clickStart() {
     this.setData({
       showpop: true,
       nowTimeType: 'start'
     })
   },
+  // 修改事件点击时间输入框唤醒时间选择器
+  clickStart_cha() {
+    this.setData({
+      showChangepop: true,
+      nowTimeType_cha: 'start'
+    })
+  },
+  // 新建事件点击时间输入框唤醒时间选择器
   clickEnd() {
     this.setData({
       showpop: true,
       nowTimeType: 'end'
     })
-
   },
+  // 修改事件点击时间输入框唤醒时间选择器
+  clickEnd_cha() {
+    this.setData({
+      showChangepop: true,
+      nowTimeType_cha: 'end'
+    })
+  },
+  // 新建事件时间选择器确认
   setTime(value) {
     var time = value.detail
     console.log(time)
@@ -210,11 +242,34 @@ const conf = {
     }
     this.onpopClose()
   },
+  // 修改事件时间选择器确认
+  ChangeTime(value) {
+    var time = value.detail
+    console.log(time)
+    if (this.data.nowTimeType_cha == 'start') {
+      this.setData({
+        time_start_cha: time
+      })
+    } else if (this.data.nowTimeType_cha == 'end') {
+      this.setData({
+        time_end_cha: time
+      })
+    }
+    this.onChangepopClose()
+  },
+  // 新建事件时间选择器关闭
   onpopClose() {
     this.setData({
       showpop: false
     });
   },
+  // 修改事件时间选择器关闭
+  onChangepopClose() {
+    this.setData({
+      showChangepop: false
+    });
+  },
+  //dialog确认，向后端发送新建事件
   sendNewEvent() {
     const that = this
     console.log(this.data.newTitle)
@@ -248,6 +303,16 @@ const conf = {
           //这里就是请求成功后，进行一些函数操作
           console.log(res.data)
           that.con()
+          var newAr = that.data.dayEvent
+          newAr.push({
+            title: that.data.newTitle,
+            startTime: that.data.time_start + ':00',
+            endTime: that.data.time_end + ':00'
+          })
+          that.setData({
+            dayEvent: newAr
+          })
+          
           wx.showToast({
             title: '操作成功！',
             icon: 'success',
@@ -257,11 +322,75 @@ const conf = {
       })
     }
   },
+  //dialog确认，向后端发送修改事件
+  sendChangeEvent(res) {
+    const that = this
+    console.log(this.data.newTitle_cha)
+    console.log(this.data.nowSelect)
+    var ind = this.data.changeIndex
+    console.log(this.data.dayEvent)
+    console.log(this.data.dayEvent[ind])
+    if (this.data.newTitle_cha == '' || this.data.time_start_cha == '' || this.data.time_end_cha == '') {
+      //console.log('aaa')
+      wx.showToast({
+        title: '请填写完整！',
+        icon: 'none',
+        duration: 1500
+      })
+    } else {
+      if (this.data.nowSelect.month < 10) {
+        var date = this.data.nowSelect.year + '-' + '0' + this.data.nowSelect.month + '-' + this.data.nowSelect.date
+      } else if (this.data.nowSelect.month >= 10) {
+        var date = this.data.nowSelect.year + '-' + this.data.nowSelect.month + '-' + this.data.nowSelect.date
+      }
+      wx.request({
+        url: 'https://www.rhysdid.site:8082/doctor/correct', //这里填写你的接口路径
+        header: {
+          'Content-Type': 'application/json'
+        },
+        data: {
+          activity_id: this.data.dayEvent[ind].id,
+          date1: date,
+          time_start1: this.data.time_start_cha + ':00',
+          time_end1: this.data.time_end_cha + ':00',
+          detail: this.data.newTitle_cha,
+          type: '0',
+          sta: 1,
+        },
+        success: function (res) {
+          //这里就是请求成功后，进行一些函数操作
+          console.log(res.data)
+          that.con()
+          var newAr = that.data.dayEvent
+          newAr[ind].title = that.data.newTitle_cha
+          newAr[ind].startTime = that.data.time_start_cha + ':00'
+          newAr[ind].endTime = that.data.time_end_cha + ':00'
+          that.setData({
+            dayEvent: newAr
+          })
+          
+          wx.showToast({
+            title: '操作成功！',
+            icon: 'success',
+            duration: 1500
+          })
+        }
+      })
+    }
+  },
+  // 新建事件标题输入框输入
   onNewChange(event) {
     this.setData({
       newTitle: event.detail
     })
   },
+  // 修改事件标题输入框输入
+  onNewChange_cha(event) {
+    this.setData({
+      newTitle_cha: event.detail
+    })
+  },
+  //删除按钮点击事件
   deleteEvent(res) {
     var ind = res.currentTarget.dataset.index
     var that = this
@@ -279,6 +408,11 @@ const conf = {
         //这里就是请求成功后，进行一些函数操作
         console.log(res.data)
         that.con()
+        var newAr = that.data.dayEvent
+        newAr.splice(ind,1)
+        that.setData({
+          dayEvent: newAr
+        })
         wx.showToast({
           title: '操作成功！',
           icon: 'success',
@@ -286,7 +420,15 @@ const conf = {
         })
       }
     })
-  }
+  },
+  // 修改按钮唤起dialog
+  OpenChange(res) {
+    var ind = res.currentTarget.dataset.index
+    this.setData({
+      showChange: true,
+      changeIndex: ind
+    })
+  },
 }
 
 Page(conf)

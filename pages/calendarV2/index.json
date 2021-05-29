@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "小历V2-calendar 组件示例",
+  "navigationBarTitleText": "日程",
   "usingComponents": {
     "calendar": "../../component/v2/index"
   }
