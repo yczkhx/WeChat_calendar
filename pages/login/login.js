@@ -55,7 +55,7 @@ Page({
             var unitId = that.data.username;
             wx.setStorageSync('unitId', unitId);
             wx.navigateTo({
-              url: '../calendarV2/index'
+              url: '../calendarV2/index?id=' + that.data.username,
             })
           } else {
             var title=""

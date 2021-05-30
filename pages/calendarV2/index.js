@@ -1,10 +1,11 @@
-import todo from '../../component/v2/plugins/todo'
+
 import selectable from '../../component/v2/plugins/selectable'
 import solarLunar from '../../component/v2/plugins/solarLunar/index'
 import timeRange from '../../component/v2/plugins/time-range'
 import week from '../../component/v2/plugins/week'
 import holidays from '../../component/v2/plugins/holidays/index'
 import plugin from '../../component/v2/plugins/index'
+import todo from '../../component/v2/plugins/todo'
 plugin
   .use(todo)
   .use(solarLunar)
@@ -52,24 +53,16 @@ const conf = {
     time_end_cha: '',
     nowTimeType_cha: '',
     changeIndex:0,
+    id:''
   },
-  onLoad() {
+  onLoad(ops) {
     console.log('onload')
     const that = this
-    wx.request({
-      url: 'https://www.rhysdid.site:8082/doctor/login', //这里填写你的接口路径
-      header: {
-        'Content-Type': 'application/json'
-      },
-      data: {
-        id: "2020001",
-        passwd1: 123456
-      },
-      success: function (res) {
-        //这里就是请求成功后，进行一些函数操作
-        console.log(res.data)
-      }
+    var id = ops.id
+    this.setData({
+      id:id
     })
+  
     that.con()
     console.log(that.data.allEvent)
   },
@@ -401,7 +394,7 @@ const conf = {
         'Content-Type': 'application/json'
       },
       data: {
-        id: '2020001',
+        id: that.data.id,
         activity_id: this.data.dayEvent[ind].id,
       },
       success: function (res) {
